@@ -49,7 +49,7 @@ jobs:
       run: |
         sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -e "ssh -p 65002 -o StrictHostKeyChecking=no" --recursive ./ u763117446@147.93.78.59:/home/u763117446/domains/hub.jokku.lk/public_html/
 
-    # Step 8: Run remote commands on the production server using sshpass
+    # Step 8: Run remote commands on the production server using sshpass 
     - name: Run Remote Commands
       run: |
         sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -p 65002 -o StrictHostKeyChecking=no u763117446@147.93.78.59 << EOF
