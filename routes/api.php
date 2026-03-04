@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\StockLevelController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TaxController;
+use App\Http\Controllers\Api\VisitorInterestController;
 use App\Http\Controllers\Api\WelcomePopupSettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,7 @@ Route::post('auth/social/{provider}', [AuthController::class, 'social']);
 Route::get('settings/social-login', [SocialLoginSettingController::class, 'show']);
 Route::get('settings/hero-image', [HeroImageSettingController::class, 'show']);
 Route::get('settings/welcome-popup', [WelcomePopupSettingController::class, 'show']);
+Route::post('visitor-interests', [VisitorInterestController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
