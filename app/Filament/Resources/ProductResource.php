@@ -362,6 +362,27 @@ class ProductResource extends Resource
                     ])
                     ->columns(1)
                     ->columnSpanFull(),
+                SchemaSection::make('Product Images')
+                    ->schema([
+                        RepeatableEntry::make('images')
+                            ->label('Images')
+                            ->schema([
+                                ImageEntry::make('path')
+                                    ->label('Image')
+                                    ->disk('public')
+                                    ->size('medium'),
+                                TextEntry::make('is_primary')
+                                    ->label('Primary?')
+                                    ->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No'),
+                                TextEntry::make('sort_order')
+                                    ->label('Sort Order'),
+                            ])
+                            ->columns([
+                                'default' => 1,
+                                'sm' => 3,
+                            ]),
+                    ])
+                    ->columnSpanFull(),
                 SchemaSection::make('Variants')
                     ->schema([
                         RepeatableEntry::make('variants')
