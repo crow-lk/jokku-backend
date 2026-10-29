@@ -116,12 +116,14 @@ class OrderInfolist
                             ->schema([
                                 TextEntry::make('shipping_address')
                                     ->label('Shipping address')
-                                    ->formatStateUsing(fn (mixed $state): ?string => self::formatAddress($state))
+                                    ->state(fn (Order $record): string => self::formatAddress($record->shipping_address))
+                                    ->formatStateUsing(fn (?string $state): string => $state ?? '')
                                     ->html()
                                     ->placeholder('Not provided'),
                                 TextEntry::make('billing_address')
                                     ->label('Billing address')
-                                    ->formatStateUsing(fn (mixed $state): ?string => self::formatAddress($state))
+                                    ->state(fn (Order $record): string => self::formatAddress($record->billing_address))
+                                    ->formatStateUsing(fn (?string $state): string => $state ?? '')
                                     ->html()
                                     ->placeholder('Not provided'),
                             ]),
@@ -159,10 +161,10 @@ class OrderInfolist
         return $currency.' '.number_format((float) ($value ?? 0), 2);
     }
 
-    private static function formatAddress(mixed $address): ?string
+    private static function formatAddress(mixed $address): string
     {
         if (! $address) {
-            return null;
+            return '';
         }
 
         if (is_string($address)) {
@@ -170,22 +172,23 @@ class OrderInfolist
         }
 
         if (! is_array($address)) {
-            return null;
+            return '';
         }
 
         $lines = Collection::make([
             trim(($address['first_name'] ?? '').' '.($address['last_name'] ?? '')),
-            $address['address_line1'] ?? null,
-            $address['address_line2'] ?? null,
+            $address['line1'] ?? $address['address_line1'] ?? null,
+            $address['line2'] ?? $address['address_line2'] ?? null,
             Collection::make([
                 $address['city'] ?? null,
+                $address['state'] ?? null,
                 $address['country'] ?? null,
             ])
                 ->filter()
                 ->implode(', '),
-            $address['postal_code'] ? 'Postal code: '.$address['postal_code'] : null,
-            $address['phone'] ? 'Phone: '.$address['phone'] : null,
-            $address['email'] ? 'Email: '.$address['email'] : null,
+            filled($address['postal_code'] ?? null) ? 'Postal code: '.$address['postal_code'] : null,
+            filled($address['phone'] ?? null) ? 'Phone: '.$address['phone'] : null,
+            filled($address['email'] ?? null) ? 'Email: '.$address['email'] : null,
         ])
             ->filter()
             ->map(fn (string $line): string => e($line));
