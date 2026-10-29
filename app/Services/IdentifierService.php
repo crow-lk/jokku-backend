@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Size;
@@ -12,6 +13,17 @@ use Illuminate\Support\Str;
 
 class IdentifierService
 {
+    public function makeOrderNumber(): string
+    {
+        $timestamp = now();
+
+        while (Order::query()->where('order_number', $timestamp->format('YmdHis'))->exists()) {
+            $timestamp->addSecond();
+        }
+
+        return $timestamp->format('YmdHis');
+    }
+
     /**
      * @param  iterable<int, \App\Models\Color>  $colors
      */

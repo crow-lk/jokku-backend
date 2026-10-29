@@ -7,8 +7,8 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Services\IdentifierService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class OrderService
 {
@@ -119,7 +119,7 @@ class OrderService
 
     private function generateOrderNumber(): string
     {
-        return 'ORD-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(4));
+        return app(IdentifierService::class)->makeOrderNumber();
     }
 
     private function resolveStockLocationId(?int $locationId): int

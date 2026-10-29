@@ -17,7 +17,6 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ProcessSaleAction
 {
@@ -142,8 +141,7 @@ class ProcessSaleAction
                             'payment_status' => 'paid',
                         ]);
 
-                        $orderNumber = strtoupper(Str::random(6))
-                            .'-'.now()->timestamp.rand(1000, 9999);
+                        $orderNumber = app(\App\Services\IdentifierService::class)->makeOrderNumber();
 
                         $order = Order::create([
                             'order_number' => $orderNumber,

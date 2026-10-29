@@ -84,8 +84,8 @@
 
     /* Print page margins */
     @page {
-        margin: 0.5in;
-        size: A4;
+        margin: 0;
+        size: auto;
     }
 
     /* Ensure receipt container takes full width and has proper spacing */
@@ -204,3 +204,4 @@
 .filament-page-heading {
     color: var(--primary);
 }
+

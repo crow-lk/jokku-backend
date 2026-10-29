@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\IdentifierService;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Str;
 
 class CreateOrder extends CreateRecord
 {
@@ -35,7 +35,7 @@ class CreateOrder extends CreateRecord
         $data['notes'] ??= null;
 
         // Calculate subtotal and stash items for afterCreate()
-        if (!empty($data['items']) && is_array($data['items'])) {
+        if (! empty($data['items']) && is_array($data['items'])) {
             $subtotal = 0;
             $this->pendingItems = [];
 
@@ -74,13 +74,13 @@ class CreateOrder extends CreateRecord
 
     protected function afterCreate(): void
     {
-        if (!empty($this->pendingItems)) {
+        if (! empty($this->pendingItems)) {
             $this->record->items()->createMany($this->pendingItems);
         }
     }
 
     private function generateOrderNumber(): string
     {
-        return 'ORD-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(4));
+        return app(IdentifierService::class)->makeOrderNumber();
     }
 }

@@ -1,541 +1,166 @@
 <x-filament-panels::page>
-    <div class="invoice-toolbar print:hidden">
-        <div class="title-wrap">
-            <h1 class="invoice-title">Invoice</h1>
-            <div class="print-actions">
-                <button onclick="setPrint('a4')" class="btn-print">🖨️ Print(A4)</button>
-                <button onclick="setPrint('pos')" class="btn-print">🧾 Print</button>
-            </div>
-        </div>
+    <div class="flex justify-end print:hidden">
+        <x-filament::button type="button" onclick="window.print()">Print Receipt (80mm)</x-filament::button>
     </div>
 
-    <div id="invoice-root" data-print="a4">
-        <div id="invoice-content" class="invoice">
+    <div id="invoice-root">
+        <div id="invoice-content">
+            <div class="receipt-brand">
+                <img src="{{ asset('images/logo1.jpeg') }}" alt="Jokku.lk logo" width="1280" height="331">
+            </div>
+            <h2 class="receipt-heading">SALES RECEIPT</h2>
 
-            <!-- HEADER -->
-            <div class="header">
-                <div class="logo-wrap">
-                    <div class="logo-box">
-                        <img src="{{ asset('images/aaliyaa_logo.png') }}" alt="Aaliyaa Clothing">
-                    </div>
-
-                    <div class="line-wrap">
-                        <div class="ref-no">
-                            REF NO: {{ $order->payment->reference_number ?? 'INV-0001' }}
-                        </div>
-                        <hr>
-                        <div class="logo-line"></div>
-                    </div>
-                </div>
+            <div class="receipt-business receipt-section">
+                <strong>Jokku.lk</strong>
+                <p>D10/25/32, Grandburg Pl, Maharagama</p>
+                <p>0717156558</p>
             </div>
 
-            <!-- TITLE -->
-            <h2 class="invoice-table-title">INVOICE</h2>
-
-            <!-- TABLE -->
-            <table class="invoice-table">
+            <table class="receipt-details receipt-section">
                 <tbody>
-                    <tr>
-                        <th>Description</th>
-                        <th>Amount (LKR)</th>
-                    </tr>
-
-                    <tr>
-                        <td>Item</td>
-                        <td>
-                            @foreach ($sales as $sale)
-                                {{ $sale->product->name }} (x{{ $sale->quantity }})<br>
-                            @endforeach
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Unit Price</td>
-                        <td>
-                            @foreach ($sales as $sale)
-                                {{ number_format($sale->unit_price, 2) }}<br>
-                            @endforeach
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Discount</td>
-                        <td>
-                            @if($order->discount_total > 0 && $order->subtotal > 0)
-                                {{ number_format(($order->discount_total / $order->subtotal) * 100, 2) }}%
-                            @else
-                                0.00
-                            @endif
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Discount Amount</td>
-                        <td>{{ number_format($order->discount_total ?? 0, 2) }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Subtotal</td>
-                        <td>
-                            {{ number_format(($order->subtotal ?? 0) - ($order->discount_total ?? 0), 2) }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Delivery Charges</td>
-                        <td>{{ number_format($order->shipping_total, 2) }}</td>
-                    </tr>
-
-                    <tr class="grand-total">
-                        <td>Total Payable</td>
-                        <td>{{ number_format($order->grand_total, 2) }}</td>
-                    </tr>
+                    <tr><td>Order</td><td>{{ $order->order_number ?? $order->id }}</td></tr>
+                    <tr><td>Reference</td><td>{{ $order->payment?->reference_number ?: '-' }}</td></tr>
+                    <tr><td>Date</td><td>{{ $order->created_at?->format('d/m/Y H:i') ?: '-' }}</td></tr>
+                    <tr><td>Customer</td><td>{{ $order->customer_name ?: 'Walk-In Customer' }}</td></tr>
+                    <tr><td>Phone</td><td>{{ $order->customer_phone ?: 'N/A' }}</td></tr>
                 </tbody>
             </table>
 
-            <!-- FOOTER -->
-            <div class="footer image-footer">
+            <table class="receipt-items">
+                <thead><tr><th>Purchased item</th><th class="receipt-quantity">Qty</th><th>Amount</th></tr></thead>
+                <tbody>
+                    @foreach ($sales as $sale)
+                        <tr>
+                            <td>
+                                <div class="receipt-item-name">{{ $sale->product_name ?? $sale->product?->name ?? 'Item' }}</div>
+                                @if ($sale->variant_name)
+                                    <div class="receipt-item-detail">{{ $sale->variant_name }}</div>
+                                @else
+                                    @if ($size = data_get($sale->meta, 'size') ?? $sale->variant?->size?->name)
+                                        <div class="receipt-item-detail">Size: {{ $size }}</div>
+                                    @endif
+                                    @if ($color = data_get($sale->meta, 'color') ?? $sale->variant?->color_names)
+                                        <div class="receipt-item-detail">Color: {{ $color }}</div>
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="receipt-quantity">{{ $sale->quantity }}</td>
+                            <td>LKR {{ number_format($sale->line_total, 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
 
-                <!-- SIGNATURES -->
-                <div class="centered-signatures">
-                    <div>
-                        <div class="line"></div>
-                        <span class="sign">Date</span>
-                    </div>
-                    <div>
-                        <div class="line"></div>
-                        <span class="sign">Received</span>
-                    </div>
-                </div>
+            <table class="receipt-totals receipt-section">
+                <tbody>
+                    <tr><td>Subtotal</td><td>LKR {{ number_format($order->subtotal, 2) }}</td></tr>
+                    <tr><td>Discount</td><td>- LKR {{ number_format($order->discount_total ?? 0, 2) }}</td></tr>
+                    <tr><td>Delivery</td><td>LKR {{ number_format($order->shipping_total ?? 0, 2) }}</td></tr>
+                    @if ($order->tax_total > 0)
+                        <tr><td>Tax</td><td>LKR {{ number_format($order->tax_total, 2) }}</td></tr>
+                    @endif
+                    <tr class="receipt-total"><td>TOTAL</td><td>LKR {{ number_format($order->grand_total, 2) }}</td></tr>
+                    @if ($order->payment && $order->payment->amount_paid !== null)
+                        <tr><td>Amount Paid</td><td>LKR {{ number_format($order->payment->amount_paid, 2) }}</td></tr>
+                        <tr><td>Balance Due</td><td>LKR {{ number_format(max(0, $order->grand_total - $order->payment->amount_paid), 2) }}</td></tr>
+                    @endif
+                </tbody>
+            </table>
 
-                <!-- CONTACT -->
-                <div class="footer-bottom">
-                    <div class="footer-left qr-row">
-                        <img src="{{ asset('images/insta.png') }}">
-                        <img src="{{ asset('images/tiktok.png') }}">
-                    </div>
-                    <div class="footer-right">
-                        📞 +94 703 363 363<br>
-                        🌐 www.aaliyaa.com<br>
-                        📍 210, Stanley Thilakarathna Mawatha, Nugegoda
-                    </div>
-                </div>
+            <div class="receipt-footer receipt-section">
+                @php
+                    $barcodeValue = (string) ($order->order_number ?? $order->id);
+                    $barcode = app(\App\Services\ReceiptBarcode::class)->encode($barcodeValue);
+                @endphp
+                <svg class="receipt-barcode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {{ $barcode['width'] }} 50" role="img" aria-label="Order barcode: {{ $barcodeValue }}" shape-rendering="crispEdges">
+                    <rect width="{{ $barcode['width'] }}" height="50" fill="#fff" />
+                    @foreach ($barcode['bars'] as $bar)
+                        <rect x="{{ $bar['x'] }}" y="0" width="{{ $bar['width'] }}" height="50" fill="#000" />
+                    @endforeach
+                </svg>
+                <p class="receipt-order-number">{{ $barcodeValue }}</p>
+                <p class="receipt-thanks">THANK YOU</p>
+                <p class="receipt-powered">Powered by crow.lk</p>
             </div>
-
         </div>
     </div>
 
-    <script>
-        function setPrint(type) {
-            document.getElementById('invoice-root').setAttribute('data-print', type);
-            window.print();
+    <style>
+        #invoice-root {
+            width: 80mm;
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            color: #000;
         }
-    </script>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-}
-
-/* Toolbar */
-.invoice-toolbar {
-  margin-bottom: 10px;
-}
-
-.title-wrap {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.invoice-title {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.btn-print {
-  background: #2563eb;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 4px;
-  margin-left: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-/* Invoice Box */
-.invoice {
-  max-width: 800px;
-  margin: auto;
-  border: 1px solid #ddd;
-  padding: 40px;
-}
-
-/* Header */
-.logo-wrap {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.logo-box {
-  width: 55%;
-}
-
-.logo-box img {
-  max-width: 90%;
-}
-
-.line-wrap {
-  flex: 1;
-  margin-left: 15px;
-}
-
-.ref-no {
-  text-align: right;
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.logo-line {
-  display: block; /* ensures it's a block element */
-  width: 100%; /* full width */
-  height: 2px; /* line thickness */
-  background: #000; /* black line */
-}
-
-.invoice-table-title {
-  text-align: center;
-  font-size: 42px;
-  font-weight: bold;
-  margin: 10px 0 10px 0;
-}
-
-.invoice-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 30px;
-  font-size: 20px;
-}
-
-.invoice-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.invoice-table th {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.invoice-table td:first-child {
-  font-weight: bold;
-  width: 40%;
-  text-align: left;
-}
-
-.invoice-table td:last-child {
-  text-align: right;
-}
-
-.invoice-table .grand-total td {
-  font-weight: bold;
-  border-top: 2px solid #000;
-}
-
-/* Footer */
-.image-footer {
-  margin-top: 50px;
-  font-size: 11px;
-}
-
-/* Centered Signature Row */
-.centered-signatures {
-  display: flex;
-  justify-content: center; /* center horizontally */
-  gap: 330px; /* space between Date and Received */
-  margin-bottom: 25px;
-}
-
-.centered-signatures div {
-  text-align: center; /* center text and line inside each block */
-}
-
-.centered-signatures .line {
-  width: 180px;
-  border-bottom: 1px dotted #999;
-  margin: 0 auto 4px auto; /* auto margins center the line */
-}
-
-.centered-signatures .sign {
-  font-size: 16px;
-  display: block;
-}
-
-.footer-bottom {
-  display: flex;
-  gap:20px;
-  align-items: center;
-}
-
-.footer-left img {
-  height: 90px;
-}
-
-.qr-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.footer-right {
-  fill: #000;
-  text-align: left;
-  line-height: 2.5;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-
-    .invoice {
-        padding: 16px;
-        border: none;
-    }
-
-    /* Toolbar */
-    .title-wrap {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .btn-print {
-        padding: 5px 10px;
-        font-size: 12px;
-    }
-
-    /* Header */
-    .logo-wrap {
-        flex-direction: row;
-        align-items: center;
-    }
-
-    .logo-box {
-        width: 50%;
-        margin-bottom: 10px;
-    }
-
-    .logo-box img {
-        max-width: 180px;
-    }
-
-    .line-wrap {
-        width: 100%;
-        margin-left: 0;
-    }
-
-    .ref-no {
-        text-align: right;
-        font-size: 11px;
-    }
-
-    /* Title */
-    .invoice-table-title {
-        font-size: 26px;
-        margin: 20px 0;
-    }
-
-    /* Table */
-    .invoice-table {
-        font-size: 11px;
-    }
-
-    .invoice-table th,
-    .invoice-table td {
-        padding: 4px;
-    }
-
-    .invoice-table td:first-child {
-        width: 50%;
-    }
-
-    /* Signatures */
-    .centered-signatures {
-        flex-direction: row;
-        gap: 20px;
-        align-items: center;
-    }
-
-    .centered-signatures .line {
-        width: 140px;
-    }
-
-    .centered-signatures .sign {
-        font-size: 13px;
-    }
-
-    /* Footer */
-    .footer-bottom {
-        flex-direction: row;
-        align-items: center;
-        text-align: center;
-        gap: 12px;
-    }
-
-    .footer-left img {
-        height: 60px;
-    }
-
-    .footer-right {
-        padding-left: 8px;
-        font-size: 10px;
-        line-height: 1.6;
-    }
-}
-
-/* Print */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #invoice-content,
-  #invoice-content * {
-    visibility: visible;
-  }
-
-  #invoice-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
-
-  [data-print="a4"] #invoice-content {
-    width: 210mm;
-    padding: 20mm;
-    font-size: 12px;
-    border: none;
-  }
-
-  [data-print="a4"] #invoice-content {
-    width: 210mm;
-    padding: 20mm;
-    font-size: 12px;
-    border: none;
-    box-sizing: border-box;
-  }
-
-  [data-print="a4"] .header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: #fff;
-    padding-bottom: 10px;
-  }
-
-  [data-print="a4"] .image-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #fff;
-    padding-top: 10px;
-  }
-
-  /* Table fits between header and footer */
-  [data-print="a4"] .invoice-table {
-    width: 100%; /* full width of container */
-    position: fixed;
-    bottom: 120px;
-    left: 0;
-    right: 0;
-    border-collapse: collapse;
-    margin-bottom: 140px; /* space above footer */
-    font-size: 14px;
-  }
-
-  [data-print="a4"] .invoice-table td {
-    padding: 10px 10px; /* increase row height */
-  }
-
-  [data-print="a4"] .invoice-table td:first-child {
-    width: 45%; /* first column slightly bigger */
-  }
-
-  [data-print="a4"] .invoice-table-title {
-    margin-top: 260px; /* adjust title position if needed */
-    font-size: 42px;
-  }
-
-  [data-print="pos"] #invoice-content {
-    width: 80mm;
-    padding: 5mm;
-    font-size: 9px;
-    border: none;
-  }
-
-  [data-print="pos"] .invoice-table {
-    font-size: 9px;
-    margin: 0;
-  }
-
-  [data-print="pos"] .image-footer {
-        position: static; /* keep it in normal flow */
-        margin-top: 15px;
-        text-align: center;
-        padding: 5px 0;
-    }
-
-    [data-print="pos"] .centered-signatures {
-        display: flex;
-        justify-content: space-around; /* spread Date & Received evenly */
-        margin-bottom: 10px;
-        flex-wrap: wrap; /* ensures it doesn't break on narrow POS width */
-        gap: 20px; /* space between lines */
-    }
-
-    [data-print="pos"] .centered-signatures div {
-        text-align: center;
-    }
-
-    [data-print="pos"] .centered-signatures .line {
-        width: 80px; /* smaller line for narrow POS paper */
-        border-bottom: 1px dotted #999;
-        margin: 0 auto 4px auto;
-    }
-
-    [data-print="pos"] .centered-signatures .sign {
-        font-size: 9px; /* smaller font for POS */
-        display: block;
-    }
-
-    [data-print="pos"] .footer-bottom {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        align-items: center;
-    }
-
-    [data-print="pos"] .qr-row {
-        justify-content: center;
-        gap: 6px;
-    }
-
-    [data-print="pos"] .footer-left img {
-        height: 45px;
-    }
-
-    [data-print="pos"] .footer-right {
-        text-align: center;
-        font-size: 9px;
-        line-height: 1.5;
-    }
-
-  .print\:hidden {
-    display: none !important;
-  }
-}
-</style>
+        #invoice-content {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 4mm;
+            font: 12px/1.35 Arial, sans-serif;
+            overflow-wrap: anywhere;
+        }
+
+        #invoice-content p, #invoice-content h2 { margin: 0; }
+        #invoice-content .receipt-brand {
+            padding: 3mm 0 4mm;
+            text-align: center;
+        }
+        #invoice-content .receipt-brand img {
+            display: block;
+            width: 56mm;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            filter: grayscale(1) invert(1);
+        }
+        #invoice-content .receipt-heading {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding-bottom: 3mm;
+        }
+        #invoice-content .receipt-section { border-top: 1px dashed #000; }
+        #invoice-content .receipt-business { text-align: center; padding: 2mm 0; }
+        #invoice-content table { width: 100%; border-collapse: collapse; margin: 0; }
+        #invoice-content th, #invoice-content td { text-align: left; vertical-align: top; padding: 0.5mm 0; }
+        #invoice-content td:last-child, #invoice-content th:last-child { text-align: right; }
+        #invoice-content .receipt-details { border-bottom: 1px dashed #000; }
+        #invoice-content .receipt-details td:first-child { width: 25%; }
+        #invoice-content .receipt-details td:last-child { font-weight: 600; }
+        #invoice-content .receipt-details tr:first-child td { padding-top: 2mm; }
+        #invoice-content .receipt-details tr:last-child td { padding-bottom: 2mm; }
+        #invoice-content .receipt-items { margin-top: 2mm; table-layout: fixed; }
+        #invoice-content .receipt-items th:first-child { width: 56%; }
+        #invoice-content .receipt-items .receipt-quantity { width: 10%; text-align: center; }
+        #invoice-content .receipt-items th:last-child { width: 34%; }
+        #invoice-content .receipt-items thead { border-top: 1px dashed #000; border-bottom: 1px dashed #000; }
+        #invoice-content .receipt-items th { font-size: 10px; padding: 1mm 0; }
+        #invoice-content .receipt-items td { padding: 1.5mm 0; }
+        #invoice-content .receipt-items td:first-child { padding-right: 2mm; }
+        #invoice-content .receipt-items td:last-child { white-space: nowrap; font-size: 10px; }
+        #invoice-content .receipt-item-name { font-weight: 700; font-size: 11px; }
+        #invoice-content .receipt-item-detail { font-size: 9px; line-height: 1.3; }
+        #invoice-content .receipt-totals td:last-child { white-space: nowrap; }
+        #invoice-content .receipt-totals tr:first-child td { padding-top: 2mm; }
+        #invoice-content .receipt-total { border-top: 1px dashed #000; font-weight: 700; }
+        #invoice-content .receipt-total td { padding-top: 2mm; }
+        #invoice-content .receipt-footer { margin-top: 3mm; padding-top: 4mm; text-align: center; }
+        #invoice-content .receipt-order-number { font-size: 11px; }
+        #invoice-content .receipt-barcode { display: block; width: 100%; height: 14mm; margin: 0 auto; }
+        #invoice-content .receipt-thanks { margin-top: 4mm; font-weight: 700; font-size: 14px; }
+        #invoice-content .receipt-powered { margin-top: 5mm; font-size: 10px; }
+
+        @media print {
+            @page { size: auto; margin: 0; }
+            html, body { width: 80mm !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            body * { visibility: hidden !important; }
+            #invoice-root, #invoice-root * { visibility: visible !important; }
+            #invoice-root { position: absolute; top: 0; left: 0; width: 80mm; margin: 0; }
+            #invoice-content tr, #invoice-content .receipt-footer { break-inside: avoid; }
+            .print\:hidden { display: none !important; }
+        }
+    </style>
 </x-filament-panels::page>

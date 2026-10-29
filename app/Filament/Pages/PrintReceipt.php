@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ProductSale;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +18,7 @@ class PrintReceipt extends Page
     }
 
     public ?string $orderId = null;
+
     public Order $order;
 
     public $sales;
@@ -36,10 +36,11 @@ class PrintReceipt extends Page
 
         $this->order = Order::findOrFail($this->orderId);
 
-        $this->sales = OrderItem::where('order_id', $this->orderId)->get();
+        $this->sales = OrderItem::with(['product', 'variant.size', 'variant.colors'])->where('order_id', $this->orderId)->get();
 
         if ($this->sales->isEmpty()) {
             $this->redirect(route('filament.admin.pages.pos'));
+
             return;
         }
     }
@@ -63,4 +64,3 @@ class PrintReceipt extends Page
         return static::getUrl();
     }
 }
-
